@@ -1,142 +1,231 @@
+x-kafka-common: &kafka-common
+  image: apache/kafka:4.1.1
+  environment: &kafka-env-common
+    KAFKA_PROCESS_ROLES: broker,controller
+    KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+    KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
+
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+    KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:19092
+    KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+    KAFKA_MIN_INSYNC_REPLICAS: 2
+    
+    CLUSTER_ID: 'fEhAzqLPS8aklU4iXPqqbA'
+    KAFKA_LOG_DIRS: /var/kafka/data
+
+    KAFKA_JMX_PORT: 9999
+    KAFKA_OPTS: -javaagent:/tmp/jmx_prometheus_javaagent-1.1.0.jar=8091:/tmp/kafka_config.yml
+  
 services:
   kafka1:
-    image: apache/kafka:4.1.1
+    <<: *kafka-common
     hostname: kafka1
     container_name: kafka1
+    ports:
+      - "9092:19092"
+    environment:
+      <<: *kafka-env-common
+      KAFKA_NODE_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.101:9092,EXTERNAL://localhost:9092
+      KAFKA_JMX_HOSTNAME: kafka1
+    volumes:
+      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
+      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
+      - ./brokers/kafka-data1:/var/kafka/data
     networks:
       my_network:
         ipv4_address: 172.20.0.101
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.101:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
-      CLUSTER_ID: 'fEhAzqLPS8aklU4iXPqqbA'
-      KAFKA_LOG_DIRS: /tmp/kafka/data
-      KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: kafka1
-      KAFKA_OPTS: -javaagent:/tmp/jmx_prometheus_javaagent-1.1.0.jar=8091:/tmp/kafka_config.yml
-    volumes:
-      - ./brokers/kafka-data1:/tmp/kafka/data
-      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
-      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
 
   kafka2:
-    image: apache/kafka:4.1.1
+    <<: *kafka-common
     hostname: kafka2
     container_name: kafka2
+    ports:
+      - "9093:19092"
+    environment:
+      <<: *kafka-env-common
+      KAFKA_NODE_ID: 2
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.102:9092,EXTERNAL://localhost:9093
+      KAFKA_JMX_HOSTNAME: kafka2
+    volumes:
+      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
+      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
+      - ./brokers/kafka-data2:/var/kafka/data
     networks:
       my_network:
         ipv4_address: 172.20.0.102
-    environment:
-      KAFKA_NODE_ID: 2
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.102:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
-      CLUSTER_ID: 'fEhAzqLPS8aklU4iXPqqbA'
-      KAFKA_LOG_DIRS: /tmp/kafka/data
-      KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: kafka2
-      KAFKA_OPTS: -javaagent:/tmp/jmx_prometheus_javaagent-1.1.0.jar=8091:/tmp/kafka_config.yml
-    volumes:
-      - ./brokers/kafka-data2:/tmp/kafka/data
-      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
-      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
 
   kafka3:
-    image: apache/kafka:4.1.1
+    <<: *kafka-common
     hostname: kafka3
     container_name: kafka3
+    ports:
+      - "9094:19092"
+    environment:
+      <<: *kafka-env-common
+      KAFKA_NODE_ID: 3
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.103:9092,EXTERNAL://localhost:9094
+      KAFKA_JMX_HOSTNAME: kafka3
+    volumes:
+      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
+      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
+      - ./brokers/kafka-data3:/var/kafka/data
     networks:
       my_network:
         ipv4_address: 172.20.0.103
-    environment:
-      KAFKA_NODE_ID: 3
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.103:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
-      CLUSTER_ID: 'fEhAzqLPS8aklU4iXPqqbA'
-      KAFKA_LOG_DIRS: /tmp/kafka/data
-      KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: kafka3
-      KAFKA_OPTS: -javaagent:/tmp/jmx_prometheus_javaagent-1.1.0.jar=8091:/tmp/kafka_config.yml
-    volumes:
-      - ./brokers/kafka-data3:/tmp/kafka/data
-      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
-      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
 
-  kafka4:
-    image: apache/kafka:4.1.1
-    hostname: kafka4
-    container_name: kafka4
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
     networks:
       my_network:
-        ipv4_address: 172.20.0.104
+        ipv4_address: 172.20.0.200
+    ports:
+      - 8080:8080
     environment:
-      KAFKA_NODE_ID: 4
-      KAFKA_PROCESS_ROLES: broker
-      KAFKA_LISTENERS: PLAINTEXT://:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.20.0.104:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093,2@kafka2:9093,3@kafka3:9093
-      CLUSTER_ID: 'fEhAzqLPS8aklU4iXPqqbA'
-      KAFKA_LOG_DIRS: /tmp/kafka/data
-      KAFKA_JMX_PORT: 9999
-      KAFKA_JMX_HOSTNAME: kafka4
-      KAFKA_OPTS: -javaagent:/tmp/jmx_prometheus_javaagent-1.1.0.jar=8091:/tmp/kafka_config.yml
-    volumes:
-      - ./brokers/kafka-data4:/tmp/kafka/data
-      - ./monitoring/prometheus/jmx_prometheus_javaagent-1.1.0.jar:/tmp/jmx_prometheus_javaagent-1.1.0.jar
-      - ./monitoring/prometheus/kafka_config.yml:/tmp/kafka_config.yml
+      KAFKA_CLUSTERS_0_NAME: local-kraft
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:9092,kafka2:9092,kafka3:9092
+      KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL: PLAINTEXT
 
   prometheus:
-      image: prom/prometheus
-      hostname: prometheus
-      container_name: prometheus
-      networks:
-        my_network:
-          ipv4_address: 172.20.0.150
+    image: prom/prometheus
+    hostname: prometheus
+    container_name: prometheus
+    networks:
+      my_network:
+        ipv4_address: 172.20.0.150
 
-      depends_on:
-          - kafka1
-          - kafka2
-          - kafka3
-      ports:
-          - 9090:9090
-      volumes:
-          - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    ports:
+      - 9090:9090
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
-      image: grafana/grafana
-      hostname: grafana
-      container_name: grafana
-      networks:
-        my_network:
-          ipv4_address: 172.20.0.155
-      depends_on:
-          - prometheus
-      environment:
-          GF_PATHS_CONFIG: /etc/grafana/config.ini
-      ports:
-          - 3000:3000
-      volumes:
-          - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-          - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
-          - ./monitoring/grafana/config.ini:/etc/grafana/config.ini
+    image: grafana/grafana
+    hostname: grafana
+    container_name: grafana
+    networks:
+      my_network:
+        ipv4_address: 172.20.0.155
+    depends_on:
+      - prometheus
+    environment:
+      GF_PATHS_CONFIG: /etc/grafana/config.ini
+    ports:
+      - 3000:3000
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana/config.ini:/etc/grafana/config.ini
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    networks:
+      my_network:
+        ipv4_address: 172.20.0.5
+    environment:
+      POSTGRES_USER: my_user
+      POSTGRES_PASSWORD: abcd1234
+      POSTGRES_DB: kafka_example
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./connect/postgres-data:/var/lib/postgresql/data
+
+  # schema-registry:
+  #   image: confluentinc/cp-schema-registry:latest
+  #   hostname: schema-registry
+  #   container_name: schema-registry
+  #   networks:
+  #     my_network:
+  #       ipv4_address: 172.20.0.20
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     SCHEMA_REGISTRY_HOST_NAME: schema-registry
+  #     # SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 172.20.0.101:9092,172.20.0.102:9092,172.20.0.103:9092
+  #     SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:9092,kafka3:9092
+  #     SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+  #     SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+  #     SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 3      
+
+  # kafka-connect:
+  #   image: confluentinc/cp-kafka-connect:latest
+  #   hostname: kafka-connect
+  #   container_name: kafka-connect
+  #   networks:
+  #     my_network:
+  #       ipv4_address: 172.20.0.10
+  #   depends_on:
+  #     - postgres
+  #     - schema-registry
+  #   ports:
+  #     - "8083:8083"
+  #   environment:
+  #     CONNECT_BOOTSTRAP_SERVERS: 172.20.0.101:9092,172.20.0.102:9092,172.20.0.103:9092
+  #     CONNECT_REST_ADVERTISED_PORT: 8083
+  #     CONNECT_REST_PORT: 8083
+  #     CONNECT_LISTENERS: http://0.0.0.0:8083
+  #     CONNECT_GROUP_ID: connect-cluster
+  #     CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+  #     CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "3"
+  #     CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+  #     CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "3"
+  #     CONNECT_STATUS_STORAGE_TOPIC: connect-status
+  #     CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "3"
+  #     CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+  #     CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+  #     CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components,/opt/kafka/connectors"
+  #     CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+  #     CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+  #   volumes:
+  #     - ./connect/connectors:/opt/kafka/connectors
+
+  # ksqldb-schema-registry:
+  #   image: confluentinc/cp-schema-registry:latest
+  #   hostname: ksqldb-schema-registry
+  #   container_name: ksqldb-schema-registry
+  #   networks:
+  #     my_network:
+  #       ipv4_address: 172.20.0.45
+  #   ports:
+  #     - "18081:18081"
+  #   environment:
+  #     SCHEMA_REGISTRY_HOST_NAME: schema-registry
+  #     SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 172.20.0.101:9092,172.20.0.102:9092,172.20.0.103:9092
+  #     SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:18081
+  #     SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: 3
+
+  # ksqldb-server:
+  #   image: confluentinc/ksqldb-server:latest
+  #   hostname: ksqldb-server
+  #   container_name: ksqldb-server
+  #   networks:
+  #     my_network:
+  #       ipv4_address: 172.20.0.50
+  #   depends_on:
+  #     - ksqldb-schema-registry
+  #   ports:
+  #     - "8088:8088"
+  #   environment:
+  #     KSQL_HOST_NAME: ksqldb-server
+  #     KSQL_BOOTSTRAP_SERVERS: 172.20.0.101:9092,172.20.0.102:9092,172.20.0.103:9092
+  #     KSQL_LISTENERS: http://0.0.0.0:8088
+  #     KSQL_KSQL_SCHEMA_REGISTRY_URL: http://172.20.0.45:18081
+  #     KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+  #     KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+  #     KSQL_KSQL_STREAMS_REPLICATION_FACTOR: 3
+  #     KSQL_KSQL_STREAMS_NUM_PARTITIONS: 4
+  #     KSQL_KSQL_STREAMS_AUTO_OFFSET_RESET: 'earliest'
 
 networks:
   my_network:

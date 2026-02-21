@@ -1,3 +1,3 @@
 .venv/
 brokers/
-connectors/postgres-data/
+postgres-data/

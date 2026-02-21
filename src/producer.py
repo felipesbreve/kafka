@@ -1,49 +1,17 @@
 import random
+import json
 from time import sleep
+from typing import Any, Dict
 
+from jsonschema import validate, ValidationError
+from confluent_kafka import SerializingProducer, KafkaException
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.json_schema import JSONSerializer
-from confluent_kafka import SerializingProducer, KafkaException
-
-# Create the topic first!
-# ./kafka_2.13-3.9.0/bin/kafka-topics.sh --create \
-#   --bootstrap-server 172.20.0.101:9092 \
-#   --topic users \
-#   --partitions 4 \
-#   --replication-factor 3 \
-#   --config retention.ms=259200000 \
-#   --config segment.bytes=16777216
-
-# Kafka Connect config
-# curl -X POST -H "Content-Type: application/json" -d '{
-# "name": "postgres-users-sink",
-# "config": {
-#     "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
-#     "connection.url": "jdbc:postgresql://172.20.0.5:5432/kafka_example",
-#     "connection.user": "my_user",
-#     "connection.password": "abcd1234",
-#     "topics": "users",
-#     "insert.mode": "insert",
-#     "pk.mode": "none",
-#     "pk.fields": "id",
-#     "auto.create": "false",
-#     "auto.evolve": "false",
-#     "table.name.format": "users",
-#     "tasks.max": "2",
-#     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-#     "key.converter.schemas.enable": "false",
-#     "value.converter": "io.confluent.connect.json.JsonSchemaConverter",
-#     "value.converter.schema.registry.url": "http://172.20.0.20:8081",
-#     "errors.tolerance": "all",
-#     "errors.deadletterqueue.topic.name": "my-connector-errors",
-#     "errors.deadletterqueue.topic.replication.factor": "3",
-#     "errors.deadletterqueue.context.headers.enable": "true"
-# }
-# }' http://172.20.0.10:8083/connectors | jq .
+from confluent_kafka.serialization import StringSerializer
 
 
 # Schema Registry configuration
-schema_registry_conf = {'url': 'http://172.20.0.20:8081'}
+schema_registry_conf = {'url': 'http://localhost:8081'}
 schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
 # Define the JSON schema
@@ -77,20 +45,29 @@ def generate_contact() -> dict[str, any]:
     }
     return message
 
-json_serializer = JSONSerializer(schema_str, schema_registry_client)
+def json_serializer(value, ctx):
+    try:
+        validate(instance=value, schema=json.loads(schema_str))
+    except ValidationError as e:
+        raise ValueError(f"JSON inválido: {e.message}")
+
+    return json.dumps(value).encode("utf-8")
 
 
 topic='users'
 
 producer = SerializingProducer({
-    'bootstrap.servers': '172.20.0.101:9092,172.20.0.102:9092,172.20.0.103:9092',
+    'bootstrap.servers': 'localhost:9092,localhost:9093,localhost:9094',
     'client.id': topic,
     'acks': 'all',
     'batch.size': 500,
-    'linger.ms': 1_000,
-    'message.timeout.ms': 5_000,
+    'linger.ms': 1000,
+    'request.timeout.ms': 10000,
+    'socket.timeout.ms': 10000,
+    'message.timeout.ms': 5000,
     'retries': 3,
-    'value.serializer': json_serializer
+    'value.serializer': json_serializer,
+    'key.serializer': StringSerializer("utf_8")
 })
 
 count_messages = 0
@@ -99,7 +76,11 @@ try:
     while True:
         try:
             contact = generate_contact()
-            producer.produce(topic=topic, value=contact)
+            producer.produce(
+                topic=topic,
+                key=contact["email"],
+                value=contact
+            )
         except KafkaException as e:
             print(f"Error sending message: {e}")
         except BufferError as e:
