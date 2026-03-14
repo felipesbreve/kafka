@@ -28,6 +28,7 @@ schema_str = """
   "required": ["name", "age", "email"]
 }
 """
+json_serializer = JSONSerializer(schema_str, schema_registry_client)
 
 def generate_contact() -> dict[str, any]:
     first_name = random.choice([
@@ -45,29 +46,18 @@ def generate_contact() -> dict[str, any]:
     }
     return message
 
-def json_serializer(value, ctx):
-    try:
-        validate(instance=value, schema=json.loads(schema_str))
-    except ValidationError as e:
-        raise ValueError(f"JSON inválido: {e.message}")
-
-    return json.dumps(value).encode("utf-8")
-
-
 topic='users'
 
 producer = SerializingProducer({
-    'bootstrap.servers': 'localhost:9092,localhost:9093,localhost:9094',
+    'bootstrap.servers': '127.0.0.1:19092,127.0.0.1:19093,127.0.0.1:19094',
     'client.id': topic,
     'acks': 'all',
     'batch.size': 500,
-    'linger.ms': 1000,
-    'request.timeout.ms': 10000,
-    'socket.timeout.ms': 10000,
-    'message.timeout.ms': 5000,
+    'linger.ms': 100,
+    'message.timeout.ms': 10_000,
     'retries': 3,
-    'value.serializer': json_serializer,
-    'key.serializer': StringSerializer("utf_8")
+    'key.serializer': StringSerializer('utf_8'),
+    'value.serializer': json_serializer
 })
 
 count_messages = 0
@@ -81,17 +71,18 @@ try:
                 key=contact["email"],
                 value=contact
             )
+            print(f"Produzindo mensagem: {contact}")
         except KafkaException as e:
             print(f"Error sending message: {e}")
         except BufferError as e:
             producer.flush()
+            print(f"Buffer cheio, aguardando para enviar mensagens... {e}")
         count_messages += 1
-        print(".", end='', flush=True)
-
+        print(".", end="", flush=True)
         sleep(random.uniform(0, 1))
 
 except KeyboardInterrupt:
-    print(" done")
+    print("done")
 finally:
     # Send all pending messages
     producer.flush()
