@@ -10,7 +10,7 @@ curl -X POST -H "Content-Type: application/json" --data '{
     "topics": "delivery",
     "redis.uri": "redis://172.20.0.6:6379",
     "redis.type": "JSON",
-    "redis.keyspace": "delivery:delivery_id",
+    "redis.keyspace": "delivery:driver_id",
     "value.converter": "io.confluent.connect.json.JsonSchemaConverter",
     "value.converter.schema.registry.url": "http://schema-registry:8081",
     "value.converter.schemas.enable": "false"
